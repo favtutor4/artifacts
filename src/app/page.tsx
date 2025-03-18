@@ -1,427 +1,287 @@
-'use client'; 
 import React, { useState, useEffect } from 'react';
 
-const BFSVisualization = () => {
-  // Graph definition - keeping it simple with fewer nodes
-  const nodes = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const edges = [
-    ['A', 'B'], ['A', 'C'],
-    ['B', 'D'], ['B', 'E'],
-    ['C', 'F']
-  ];
-  
-  // Animation states
+const DFSAnimation = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1500); // slower default speed - 1.5 seconds
-  
-  // BFS traversal steps with clear explanations
-  const bfsSteps = [
-    { 
-      queue: ['A'], 
-      visited: ['A'], 
-      current: 'A',
-      description: "1. We start at node A. We add A to our queue and mark it as visited." 
-    },
-    { 
-      queue: ['B', 'C'], 
-      visited: ['A', 'B', 'C'], 
-      current: '', 
-      description: "2. We take A out of the queue and look at all its neighbors (B and C). We add B and C to our queue and mark them as visited." 
-    },
-    { 
-      queue: ['C', 'D', 'E'], 
-      visited: ['A', 'B', 'C', 'D', 'E'], 
-      current: 'B', 
-      description: "3. Next, we take B from the queue. We look at B's neighbors (D and E) and add them to our queue. We mark D and E as visited." 
-    },
-    { 
-      queue: ['D', 'E', 'F'], 
-      visited: ['A', 'B', 'C', 'D', 'E', 'F'], 
-      current: 'C', 
-      description: "4. Next, we take C from the queue. We look at C's neighbor (F) and add it to our queue. We mark F as visited." 
-    },
-    { 
-      queue: ['E', 'F'], 
-      visited: ['A', 'B', 'C', 'D', 'E', 'F'], 
-      current: 'D', 
-      description: "5. Next, we take D from the queue. D has no unvisited neighbors, so we do nothing." 
-    },
-    { 
-      queue: ['F'], 
-      visited: ['A', 'B', 'C', 'D', 'E', 'F'], 
-      current: 'E', 
-      description: "6. Next, we take E from the queue. E has no unvisited neighbors, so we do nothing." 
-    },
-    { 
-      queue: [], 
-      visited: ['A', 'B', 'C', 'D', 'E', 'F'], 
-      current: 'F', 
-      description: "7. Finally, we take F from the queue. F has no unvisited neighbors. Our queue is now empty, so BFS is complete!" 
-    }
+  const [animationPlaying, setAnimationPlaying] = useState(false);
+  const [animationSpeed, setAnimationSpeed] = useState(1000);
+
+  const totalSteps = 13;
+
+  // Graph structure
+  const nodes = {
+    A: { x: 200, y: 100 },
+    B: { x: 100, y: 200 },
+    C: { x: 300, y: 200 },
+    D: { x: 50, y: 300 },
+    E: { x: 150, y: 300 },
+    F: { x: 300, y: 300 },
+  };
+
+  const edges = [
+    { from: 'A', to: 'B' },
+    { from: 'A', to: 'C' },
+    { from: 'B', to: 'D' },
+    { from: 'B', to: 'E' },
+    { from: 'C', to: 'F' },
   ];
-  
-  // Handle play/pause
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-  
-  // Handle steps
-  const nextStep = () => {
-    if (currentStep < bfsSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      setIsPlaying(false);
-    }
-  };
-  
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-  
-  const resetStep = () => {
-    setCurrentStep(0);
-    setIsPlaying(false);
-  };
-  
-  // Animation effect
+
+  // DFS steps explanation
+  const steps = [
+    { text: "Starting DFS traversal from node A", visited: [], current: 'A', stack: ['A'] },
+    { text: "1. Mark A as visited", visited: ['A'], current: 'A', stack: ['A'] },
+    { text: "2. Visit the first neighbor, B", visited: ['A'], current: 'B', stack: ['A', 'B'] },
+    { text: "3. Mark B as visited", visited: ['A', 'B'], current: 'B', stack: ['A', 'B'] },
+    { text: "4. Visit B's first neighbor, D", visited: ['A', 'B'], current: 'D', stack: ['A', 'B', 'D'] },
+    { text: "5. Mark D as visited (D has no unvisited neighbors)", visited: ['A', 'B', 'D'], current: 'D', stack: ['A', 'B', 'D'] },
+    { text: "6. Backtrack to B", visited: ['A', 'B', 'D'], current: 'B', stack: ['A', 'B'] },
+    { text: "7. Visit B's next neighbor, E", visited: ['A', 'B', 'D'], current: 'E', stack: ['A', 'B', 'E'] },
+    { text: "8. Mark E as visited (E has no unvisited neighbors)", visited: ['A', 'B', 'D', 'E'], current: 'E', stack: ['A', 'B', 'E'] },
+    { text: "9. Backtrack to A", visited: ['A', 'B', 'D', 'E'], current: 'A', stack: ['A'] },
+    { text: "10. Visit A's next neighbor, C", visited: ['A', 'B', 'D', 'E'], current: 'C', stack: ['A', 'C'] },
+    { text: "11. Mark C as visited", visited: ['A', 'B', 'D', 'E', 'C'], current: 'C', stack: ['A', 'C'] },
+    { text: "12. Visit C's neighbor, F", visited: ['A', 'B', 'D', 'E', 'C'], current: 'F', stack: ['A', 'C', 'F'] },
+    { text: "13. Mark F as visited", visited: ['A', 'B', 'D', 'E', 'C', 'F'], current: 'F', stack: ['A', 'C', 'F'] },
+  ];
+
+  // Control animation
   useEffect(() => {
     let timer;
-    if (isPlaying) {
+    if (animationPlaying && currentStep < totalSteps) {
       timer = setTimeout(() => {
-        if (currentStep < bfsSteps.length - 1) {
-          setCurrentStep(currentStep + 1);
-        } else {
-          setIsPlaying(false);
-        }
-      }, speed);
+        setCurrentStep(currentStep + 1);
+      }, animationSpeed);
+    } else if (animationPlaying && currentStep >= totalSteps) {
+      setAnimationPlaying(false);
     }
     return () => clearTimeout(timer);
-  }, [isPlaying, currentStep, speed, bfsSteps.length]);
-  
-  // Calculate node positions for a clearer layout
-  const nodePositions = {
-    'A': { x: 200, y: 50 },
-    'B': { x: 100, y: 150 },
-    'C': { x: 300, y: 150 },
-    'D': { x: 50, y: 250 },
-    'E': { x: 150, y: 250 },
-    'F': { x: 350, y: 250 }
+  }, [currentStep, animationPlaying, animationSpeed, totalSteps]);
+
+  const handlePrevious = () => {
+    setAnimationPlaying(false);
+    setCurrentStep(Math.max(0, currentStep - 1));
   };
-  
-  // Get current state
-  const currentState = bfsSteps[currentStep];
-  
-  // Node color based on state - using more distinct colors
+
+  const handleNext = () => {
+    setAnimationPlaying(false);
+    setCurrentStep(Math.min(totalSteps, currentStep + 1));
+  };
+
+  const handlePlayPause = () => {
+    setAnimationPlaying(!animationPlaying);
+  };
+
+  const handleReset = () => {
+    setAnimationPlaying(false);
+    setCurrentStep(0);
+  };
+
   const getNodeColor = (node) => {
-    if (node === currentState.current) return "#FF5733"; // Bright orange for current node
-    if (currentState.queue.includes(node)) return "#FFCC00"; // Yellow for nodes in queue
-    if (currentState.visited.includes(node)) return "#4CAF50"; // Green for visited nodes
-    return "#BBDEFB"; // Light blue for unvisited nodes
-  };
-  
-  // Edge color based on state
-  const getEdgeColor = (from, to) => {
-    const fromVisited = currentState.visited.includes(from);
-    const toVisited = currentState.visited.includes(to);
+    const currentStepData = steps[currentStep];
+    if (!currentStepData) return '#BBDEFB'; // Default color
     
-    // If both nodes are visited, highlight the edge
-    if (fromVisited && toVisited) {
-      // Special highlight for the current node's connections
-      if (from === currentState.current || to === currentState.current) {
-        return "#FF5733"; // Bright orange for current connections
-      }
-      return "#666666"; // Dark gray for other visited connections
+    if (node === currentStepData.current) {
+      return '#F44336'; // Current node (red)
+    } else if (currentStepData.visited.includes(node)) {
+      return '#4CAF50'; // Visited node (green)
+    } else {
+      return '#BBDEFB'; // Unvisited node (light blue)
+    }
+  };
+
+  const getEdgeColor = (from, to) => {
+    const currentStepData = steps[currentStep];
+    if (!currentStepData) return '#90A4AE';
+    
+    // If we're currently moving along this edge or it's part of our stack path
+    if ((currentStepData.current === to && 
+        currentStepData.stack.includes(from) && 
+        currentStepData.stack.indexOf(from) === currentStepData.stack.indexOf(to) - 1) || 
+        (currentStepData.current === from && 
+        currentStepData.stack.includes(to) && 
+        currentStepData.stack.indexOf(to) === currentStepData.stack.indexOf(from) - 1)) {
+      return '#FF9800'; // Active edge (orange)
     }
     
-    return "#DDDDDD"; // Light gray for unvisited connections
+    // If both nodes are visited
+    if (currentStepData.visited.includes(from) && currentStepData.visited.includes(to)) {
+      return '#4CAF50'; // Visited edge (green)
+    }
+    
+    return '#90A4AE'; // Default edge color (gray)
   };
-  
-  // Inline styles
-  const containerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '16px',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    maxWidth: '600px',
-    margin: '0 auto'
-  };
-  
-  const titleStyle = {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    marginBottom: '16px',
-    textAlign: 'center'
-  };
-  
-  const legendContainerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '16px',
-    marginBottom: '16px',
-    flexWrap: 'wrap'
-  };
-  
-  const legendItemStyle = {
-    display: 'flex',
-    alignItems: 'center'
-  };
-  
-  const legendColorBoxStyle = (color) => ({
-    width: '16px',
-    height: '16px',
-    backgroundColor: color,
-    marginRight: '4px',
-    border: '1px solid #333'
-  });
-  
-  const svgContainerStyle = {
-    border: '1px solid #ccc',
-    marginBottom: '16px',
-    backgroundColor: '#f9f9f9'
-  };
-  
-  const queueContainerStyle = {
-    marginBottom: '16px',
-    width: '100%',
-    maxWidth: '450px'
-  };
-  
-  const queueTitleStyle = {
-    fontWeight: 'bold',
-    fontSize: '18px'
-  };
-  
-  const queueDisplayStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginTop: '8px',
-    padding: '16px',
-    border: '1px solid #ccc',
-    minHeight: '60px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '4px'
-  };
-  
-  const queueNodeStyle = {
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFCC00',
-    borderRadius: '50%',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    border: '2px solid #666'
-  };
-  
-  const emptyQueueTextStyle = {
-    color: '#666'
-  };
-  
-  const queueHintStyle = {
-    marginLeft: '8px',
-    color: '#666'
-  };
-  
-  const descriptionContainerStyle = {
-    marginBottom: '16px',
-    padding: '16px',
-    border: '1px solid #ccc',
-    width: '100%',
-    maxWidth: '450px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '4px'
-  };
-  
-  const descriptionTextStyle = {
-    fontSize: '18px'
-  };
-  
-  const stepCounterStyle = {
-    marginBottom: '16px',
-    textAlign: 'center'
-  };
-  
-  const stepBoldStyle = {
-    fontWeight: 'bold'
-  };
-  
-  const controlsContainerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '16px',
-    marginBottom: '16px',
-    flexWrap: 'wrap'
-  };
-  
-  const buttonStyle = (color) => ({
-    padding: '8px 16px',
-    backgroundColor: color,
-    color: 'white',
-    borderRadius: '8px',
-    border: 'none',
-    fontSize: '16px',
-    cursor: 'pointer'
-  });
-  
-  const disabledButtonStyle = {
-    backgroundColor: '#ccc',
-    cursor: 'not-allowed'
-  };
-  
-  const speedControlContainerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
+
+  const getEdgeWidth = (from, to) => {
+    const currentStepData = steps[currentStep];
+    if (!currentStepData) return 2;
+    
+    // If we're currently moving along this edge or it's part of our stack path
+    if ((currentStepData.current === to && 
+        currentStepData.stack.includes(from) && 
+        currentStepData.stack.indexOf(from) === currentStepData.stack.indexOf(to) - 1) || 
+        (currentStepData.current === from && 
+        currentStepData.stack.includes(to) && 
+        currentStepData.stack.indexOf(to) === currentStepData.stack.indexOf(from) - 1)) {
+      return 4; // Highlight active edge
+    }
+    
+    return 2; // Default edge width
   };
   
   return (
-    <div style={containerStyle}>
-      <h2 style={titleStyle}>Breadth First Search (BFS)</h2>
+    <div className="bg-gray-100 p-4 rounded-lg shadow-lg">
+      <h1 className="text-2xl font-bold text-center mb-4">Depth-First Search (DFS) Animation</h1>
       
-      {/* Legend */}
-      <div style={legendContainerStyle}>
-        <div style={legendItemStyle}>
-          <div style={legendColorBoxStyle('#BBDEFB')}></div>
-          <span>Unvisited</span>
-        </div>
-        <div style={legendItemStyle}>
-          <div style={legendColorBoxStyle('#FFCC00')}></div>
-          <span>In Queue</span>
-        </div>
-        <div style={legendItemStyle}>
-          <div style={legendColorBoxStyle('#4CAF50')}></div>
-          <span>Visited</span>
-        </div>
-        <div style={legendItemStyle}>
-          <div style={legendColorBoxStyle('#FF5733')}></div>
-          <span>Current</span>
-        </div>
+      <div className="bg-white p-4 rounded-lg shadow mb-4 text-center">
+        <p className="text-lg font-semibold">
+          {steps[currentStep]?.text || "Ready to start DFS traversal"}
+        </p>
       </div>
       
-      {/* SVG Graph */}
-      <svg width="400" height="300" style={svgContainerStyle}>
-        {/* Draw edges */}
-        {edges.map(([from, to], idx) => (
-          <line 
-            key={idx}
-            x1={nodePositions[from].x} 
-            y1={nodePositions[from].y}
-            x2={nodePositions[to].x} 
-            y2={nodePositions[to].y}
-            stroke={getEdgeColor(from, to)}
-            strokeWidth="3"
-          />
-        ))}
-        
-        {/* Draw nodes */}
-        {nodes.map((node) => (
-          <g key={node}>
-            <circle 
-              cx={nodePositions[node].x} 
-              cy={nodePositions[node].y} 
-              r="25" 
-              fill={getNodeColor(node)}
-              stroke="#333"
-              strokeWidth="2"
+      <div className="relative w-full h-96 bg-white rounded-lg shadow mb-4 overflow-hidden">
+        {/* Graph visualization */}
+        <svg width="100%" height="100%" viewBox="0 0 400 400">
+          {/* Edges */}
+          {edges.map((edge, idx) => (
+            <line 
+              key={idx} 
+              x1={nodes[edge.from].x} 
+              y1={nodes[edge.from].y} 
+              x2={nodes[edge.to].x} 
+              y2={nodes[edge.to].y} 
+              stroke={getEdgeColor(edge.from, edge.to)} 
+              strokeWidth={getEdgeWidth(edge.from, edge.to)} 
             />
-            <text 
-              x={nodePositions[node].x} 
-              y={nodePositions[node].y + 6} 
-              textAnchor="middle" 
-              fill="#000"
-              fontSize="18"
-              fontWeight="bold"
+          ))}
+          
+          {/* Nodes */}
+          {Object.entries(nodes).map(([key, node]) => (
+            <g key={key}>
+              <circle 
+                cx={node.x} 
+                cy={node.y} 
+                r="25" 
+                fill={getNodeColor(key)} 
+                stroke="#2196F3" 
+                strokeWidth="2" 
+              />
+              <text 
+                x={node.x} 
+                y={node.y} 
+                textAnchor="middle" 
+                dominantBaseline="middle" 
+                fontSize="18" 
+                fontWeight="bold"
+              >
+                {key}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+      
+      {/* Stack visualization */}
+      <div className="bg-white p-4 rounded-lg shadow mb-4">
+        <h3 className="text-lg font-semibold mb-2">DFS Stack:</h3>
+        <div className="flex flex-row-reverse justify-end items-center space-x-2 space-x-reverse">
+          {steps[currentStep]?.stack.map((node, idx) => (
+            <div 
+              key={idx} 
+              className="w-10 h-10 flex items-center justify-center rounded-md"
+              style={{
+                backgroundColor: node === steps[currentStep]?.current ? '#F44336' : '#4CAF50',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
             >
               {node}
-            </text>
-          </g>
-        ))}
-      </svg>
-      
-      {/* Queue Visualization */}
-      <div style={queueContainerStyle}>
-        <h3 style={queueTitleStyle}>Queue:</h3>
-        <div style={queueDisplayStyle}>
-          {currentState.queue.length > 0 ? (
-            <>
-              {currentState.queue.map((node, idx) => (
-                <div key={idx} style={queueNodeStyle}>
-                  {node}
-                </div>
-              ))}
-              <div style={queueHintStyle}>← Next to process</div>
-            </>
-          ) : (
-            <div style={emptyQueueTextStyle}>Queue is empty - BFS is complete!</div>
+            </div>
+          ))}
+          {steps[currentStep]?.stack.length === 0 && (
+            <div className="text-gray-500">Empty stack</div>
           )}
         </div>
       </div>
       
-      {/* Description */}
-      <div style={descriptionContainerStyle}>
-        <p style={descriptionTextStyle}>{currentState.description}</p>
-      </div>
-      
-      {/* Step Counter */}
-      <div style={stepCounterStyle}>
-        <span style={stepBoldStyle}>Step {currentStep + 1}</span> of {bfsSteps.length}
-      </div>
-      
       {/* Controls */}
-      <div style={controlsContainerStyle}>
-        <button 
-          onClick={prevStep} 
-          disabled={currentStep === 0}
-          style={currentStep === 0 ? {...buttonStyle('#3498db'), ...disabledButtonStyle} : buttonStyle('#3498db')}
-        >
-          ← Previous
-        </button>
-        <button 
-          onClick={togglePlay} 
-          style={buttonStyle('#2ecc71')}
-        >
-          {isPlaying ? '⏸️ Pause' : '▶️ Play'}
-        </button>
-        <button 
-          onClick={nextStep} 
-          disabled={currentStep === bfsSteps.length - 1}
-          style={currentStep === bfsSteps.length - 1 ? {...buttonStyle('#3498db'), ...disabledButtonStyle} : buttonStyle('#3498db')}
-        >
-          Next →
-        </button>
-        <button 
-          onClick={resetStep} 
-          style={buttonStyle('#e74c3c')}
-        >
-          Reset
-        </button>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex space-x-2">
+          <button 
+            onClick={handlePrevious}
+            disabled={currentStep === 0}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button 
+            onClick={handleNext}
+            disabled={currentStep === totalSteps}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+        
+        <div className="flex space-x-2">
+          <button 
+            onClick={handlePlayPause}
+            className={`px-4 py-2 ${animationPlaying ? 'bg-yellow-500' : 'bg-green-500'} text-white rounded-md`}
+          >
+            {animationPlaying ? 'Pause' : 'Play'}
+          </button>
+          <button 
+            onClick={handleReset}
+            className="px-4 py-2 bg-red-500 text-white rounded-md"
+          >
+            Reset
+          </button>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <label className="text-sm">Speed:</label>
+          <select 
+            value={animationSpeed}
+            onChange={(e) => setAnimationSpeed(Number(e.target.value))}
+            className="border rounded p-1"
+          >
+            <option value={2000}>Slow</option>
+            <option value={1000}>Normal</option>
+            <option value={500}>Fast</option>
+          </select>
+        </div>
       </div>
       
-      {/* Speed Control */}
-      <div style={speedControlContainerStyle}>
-        <span>Speed:</span>
-        <input 
-          type="range" 
-          min="500" 
-          max="3000" 
-          step="500" 
-          value={speed} 
-          onChange={(e) => setSpeed(Number(e.target.value))} 
-          style={{width: '120px'}}
-        />
-        <span>{speed/1000} seconds</span>
+      {/* Legend */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-2">Legend:</h3>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-red-500"></div>
+            <span>Current Node</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-green-500"></div>
+            <span>Visited Node</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-blue-200"></div>
+            <span>Unvisited Node</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-orange-500"></div>
+            <span>Active Edge</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-green-500"></div>
+            <span>Traversed Edge</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-gray-400"></div>
+            <span>Untraversed Edge</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default BFSVisualization;
+export default DFSAnimation;
